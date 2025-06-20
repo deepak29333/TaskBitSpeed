@@ -17,22 +17,17 @@ TaskBitSpeed is a Node.js@22.16.0  TypeScript project.
 
 2. Install dependencies:
    ```
-   npm install
+   yarn install
    ```
+//Note:-
+    please create a database then then change the creidentials in `src/database/dataSource.ts` file
 
 ## Running the Project
 
 To start the application in development mode:
 
 ```
-npm run start
-```
-
-Or, if you want to run the compiled JavaScript:
-
-```
-npm run build
-npm run start:prod
+ yarn start
 ```
 
 ## Project Structure
@@ -41,3 +36,15 @@ npm run start:prod
 - `src/controller/` - Controllers
 - `src/entity/` - Entities
 - `src/database/` - Database configuration
+
+## Tech Stack
+
+- **Node.js** (v22 or higher)
+- **TypeScript**
+- **koa.js** (web framework)
+- **TypeORM** (ORM for database interaction)
+- **PostgreSQL** (default database, can be changed)
+
+## Database Configuration
+
+The default database is SQLite. You can change the database configuration in `src/database/dataSource.ts`.
