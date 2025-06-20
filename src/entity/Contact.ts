@@ -28,7 +28,7 @@ export class Contact extends BaseEntity {
   email!: string | null;
 
   @Column({nullable: true})
-  linkedin!: number;
+  linkedIn!: number;
 
   @Column({enum: ["primary", "secondary"], default: "primary"})
   linkPrecedence!: string;

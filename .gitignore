@@ -1,0 +1,4 @@
+/node_nodules
+.gitignore
+# Ignore node_modules directory
+/.env

@@ -1,11 +1,13 @@
 import {Contact} from "../entity/Contact";
 import {DataSource} from "typeorm";
+import {BaseController} from "./BaseController";
 
-export class ContactController {
+export class ContactController extends BaseController {
 
   private contactRepository: any;
 
   constructor(connection: DataSource) {
+    super();
     this.contactRepository = connection.getRepository(Contact);
   }
 
@@ -14,21 +16,19 @@ export class ContactController {
       const {email, phoneNumber} = ctx.request.body;
 
       // Validate input
-      if (!email || !phoneNumber) {
-        ctx.status = 400;
-        ctx.body = {error: "Bad Request: At least one of email or phoneNumber must be provided."};
-        return;
+      if (!email && !phoneNumber) {
+        return this.errorResponse(ctx, new Error("Either email or phone number must be provided"), 400);
       }
 
       const primaryContact: Contact = await this.contactRepository.findOne({
-        where: [{email: email, linkPrecedence: "primary"}
-          , {phoneNumber: phoneNumber, linkPrecedence: "primary"}]
+        where: [
+          (email ? {email: email, linkPrecedence: "primary"} : {}),
+          (phoneNumber ? {phoneNumber: phoneNumber, linkPrecedence: "primary"} : {}),
+        ]
       });
 
       if (!primaryContact) {
-        ctx.status = 404;
-        ctx.body = {error: "Contact not found"};
-        return;
+        return this.errorResponse(ctx, new Error("Primary contact not found"), 404);
       }
 
 
@@ -37,44 +37,37 @@ export class ContactController {
       const linkedSecondaryContacts: Contact[] = await this.contactRepository.find({
         select: ["email", "phoneNumber", "id"],
         where: {
-          linkedId: primaryContactIdId,
+          linkedIn: primaryContactIdId,
           linkPrecedence: "secondary"
         }
       });
 
-      let phoneNumbers: string[] = primaryContact.phoneNumber ? [primaryContact.phoneNumber!] : [];
-      let emails: string[] = primaryContact.email ? [primaryContact.email!] : [];
-      let secondaryContactsIds: number[] = [];
+      let phoneNumbers: Set<string> = primaryContact.phoneNumber ? new Set([primaryContact.phoneNumber!]) : new Set();
+      let emails: Set<string> = primaryContact.email ? new Set([primaryContact.email!]) : new Set();
+      let secondaryContactsIds: Set<number> = new Set();
 
       linkedSecondaryContacts.map(
         (contact: Contact) => {
           if (contact.phoneNumber) {
-            phoneNumbers.push(contact.phoneNumber!);
+            phoneNumbers.add(contact.phoneNumber!);
           }
           if (contact.email) {
-            emails.push(contact.email!);
+            emails.add(contact.email!);
           }
-          secondaryContactsIds.push(contact.id);
+          secondaryContactsIds.add(contact.id);
         }
       )
 
-
       let output = {
         primaryContactId: primaryContactIdId,
-        emails: emails,
-        phoneNumbers: phoneNumbers,
-        secondaryContactsIds: secondaryContactsIds
+        emails: Array.from(emails),
+        phoneNumbers: Array.from(phoneNumbers),
+        secondaryContactsIds: Array.from(secondaryContactsIds)
       }
 
-      ctx.status = 200;
-      ctx.body = {contact: output};
-      return;
-
+      return this.okResponse(ctx, output);
     } catch (err) {
-      console.error("Error fetching contacts:", err);
-      ctx.status = 500;
-      ctx.body = {error: "Internal Server Error"};
-      return;
+      return this.errorResponse(ctx, err as Error, 500);
     }
   }
 }
